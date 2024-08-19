@@ -494,9 +494,11 @@ export function isSameElementExceptValue(
   }
   return true
 }
+
 interface IPickElementOption {
   extraPickAttrs?: Array<keyof IElement>
 }
+
 export function pickElementAttr(
   payload: IElement,
   option: IPickElementOption = {}
@@ -521,6 +523,7 @@ export function pickElementAttr(
 interface IZipElementListOption {
   extraPickAttrs?: Array<keyof IElement>
 }
+
 export function zipElementList(
   payload: IElement[],
   options: IZipElementListOption = {}
@@ -806,9 +809,9 @@ export function getAnchorElement(
   const anchorNextElement = elementList[anchorIndex + 1]
   // 非列表元素 && 当前元素是换行符 && 下一个元素不是换行符 则以下一个元素作为参考元素
   return !anchorElement.listId &&
-    anchorElement.value === ZERO &&
-    anchorNextElement &&
-    anchorNextElement.value !== ZERO
+  anchorElement.value === ZERO &&
+  anchorNextElement &&
+  anchorNextElement.value !== ZERO
     ? anchorNextElement
     : anchorElement
 }
@@ -1144,6 +1147,7 @@ export function createDomFromElementList(
     }
     return clipboardDom
   }
+
   // 按行布局分类创建dom
   const clipboardDom = document.createElement('div')
   const groupElementList = groupElementListByRowFlex(elementList)
@@ -1236,6 +1240,7 @@ export function getElementListByHTML(
   options: IGetElementListByHTMLOption
 ): IElement[] {
   const elementList: IElement[] = []
+
   function findTextNode(dom: Element | Node) {
     if (dom.nodeType === 3) {
       const element = convertTextNodeToElement(dom)
@@ -1251,6 +1256,19 @@ export function getElementListByHTML(
           elementList.push({
             value: '\n'
           })
+        } else if (node.nodeName === 'CONTROL') {
+          const aElement = node as HTMLLinkElement
+          const value = aElement.innerText
+          elementList.push({
+              type: ElementType.CONTROL,
+              value: '',
+              control: {
+                type: ControlType.TEXT,
+                value: null,
+                placeholder: value
+              }
+            }
+          )
         } else if (node.nodeName === 'A') {
           const aElement = node as HTMLLinkElement
           const value = aElement.innerText
@@ -1414,6 +1432,7 @@ export function getElementListByHTML(
       }
     }
   }
+
   // 追加dom
   const clipboardDom = document.createElement('div')
   clipboardDom.innerHTML = htmlText
@@ -1495,6 +1514,7 @@ export function getTextFromElementList(elementList: IElement[]) {
     }
     return text
   }
+
   return buildText(zipElementList(elementList))
 }
 

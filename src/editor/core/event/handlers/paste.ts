@@ -56,10 +56,16 @@ export function pasteElement(host: CanvasEvent, elementList: IElement[]) {
   draw.insertElementList(elementList)
 }
 
+
 export function pasteHTML(host: CanvasEvent, htmlText: string) {
   const draw = host.getDraw()
+  const regex = /&lt;([^>]+)&gt;/g
+  // 使用正则表达式和replace方法进行替换
+  const newData = htmlText.replace(regex, (_match: string, tagName: string) => {
+    return `<control>${tagName}</control>`
+  })
   if (draw.isReadonly() || draw.isDisabled()) return
-  const elementList = getElementListByHTML(htmlText, {
+  const elementList = getElementListByHTML(newData, {
     innerWidth: draw.getOriginalInnerWidth()
   })
   pasteElement(host, elementList)
@@ -129,8 +135,17 @@ export function pasteByEvent(host: CanvasEvent, evt: ClipboardEvent) {
     const item = clipboardData.items[i]
     if (item.kind === 'string') {
       if (item.type === 'text/plain' && !isHTML) {
-        item.getAsString(plainText => {
-          host.input(plainText)
+        item.getAsString(text => {
+          const regex = /<([^>]+)>/g
+          // 使用正则表达式和replace方法进行替换
+          const newData = text.replace(regex, (_match: string, tagName: string) => {
+            return `<control>${tagName}</control>`
+          })
+          if (newData.lastIndexOf('<control>')){
+            pasteHTML(host, newData)
+          } else {
+            host.input(text)
+          }
         })
         break
       }
@@ -169,12 +184,15 @@ export async function pasteByApi(host: CanvasEvent, options?: IPasteOption) {
     return
   }
   removeClipboardData()
+
+
   // 从内存粘贴板获取数据
   if (options?.isPlainText) {
     if (clipboardText) {
       host.input(clipboardText)
     }
   } else {
+
     const clipboardData = await navigator.clipboard.read()
     let isHTML = false
     for (const item of clipboardData) {
@@ -188,7 +206,16 @@ export async function pasteByApi(host: CanvasEvent, options?: IPasteOption) {
         const textBlob = await item.getType('text/plain')
         const text = await textBlob.text()
         if (text) {
-          host.input(text)
+          const regex = /<([^>]+)>/g
+          // 使用正则表达式和replace方法进行替换
+          const newData = text.replace(regex, (_match: string, tagName: string) => {
+            return `<control>${tagName}</control>`
+          })
+          if (newData.lastIndexOf('<control>')){
+            pasteHTML(host, newData)
+          } else {
+            host.input(text)
+          }
         }
       } else if (item.types.includes('text/html') && isHTML) {
         const htmlTextBlob = await item.getType('text/html')
